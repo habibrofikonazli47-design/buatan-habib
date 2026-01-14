@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat GPT AI dengan Background Minecraft</title>
+    <style>
+        /* Reset dasar */
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+        }
+        html, body {
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('https://wallpapercave.com/wp/wp2751988.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        /* Kontainer chat */
+        .chat-container {
+            width: 420px;
+            max-width: 90vw;
+            height: 600px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid #37b24d;
+        }
+
+        /* Header */
+        .chat-header {
+            padding: 20px;
+            background: #2f9e44;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 1.5px;
+            border-bottom: 2px solid #1b7a2f;
+            user-select: none;
+            color: #d0f0c0;
+            text-shadow: 1px 1px 3px #155724;
+        }
+
+        /* Area chat */
+        #chatbox {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0 0 20px 20px;
+        }
+
+        /* Pesan chat */
+        .message {
+            max-width: 75%;
+            padding: 14px 22px;
+            border-radius: 20px;
+            font-size: 1em;
+            line-height: 1.4;
+            word-break: break-word;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            opacity: 0;
+            animation: fadeInUp 0.4s ease forwards;
+        }
+        .user {
+            background: #74b816;
+            color: #1a1a1a;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+        .bot {
+            background: #1b4332;
+            color: #a7f3d0;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        /* Form input */
+        #inputForm {
+            display: flex;
+            background: #2f9e44;
+            padding: 16px 20px;
+            gap: 15px;
+            border-top: 2px solid #1b7a2f;
+        }
+        #userInput {
+            flex-grow: 1;
+            padding: 12px 18px;
+            font-size: 16px;
+            border-radius: 40px;
+            border: none;
+            outline: none;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        #userInput::placeholder {
+            color: #8fbc8f;
+        }
+        #userInput:focus {
+            box-shadow: 0 0 10px #74b816aa;
+        }
+        #sendBtn {
+            background: #74b816;
+            border: none;
+            color: #1a1a1a;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 0 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 3px 8px #499b18aa;
+            transition: all 0.3s ease;
+        }
+        #sendBtn:hover:not(:disabled) {
+            background: #95d840;
+            box-shadow: 0 3px 15px #7ec13acc;
+        }
+        #sendBtn:disabled {
+            background: #a3c18a;
+            cursor: default;
+            box-shadow: none;
+        }
+
+        /* scrollbar chat */
+        #chatbox::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chatbox::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #chatbox::-webkit-scrollbar-thumb {
+            background: #74b816cc;
+            border-radius: 8px;
+        }
+
+        /* Animasi pesan */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">AI BUATAN HABIB</div>
+
+    <div id="chatbox"></div>
+
+    <form id="inputForm" autocomplete="off">
+        <input type="text" id="userInput" placeholder="Ketik pesan kamu..." required />
+        <button type="submit" id="sendBtn">Kirim</button>
+    </form>
+</div>
+
+<script>
+    const chatbox = document.getElementById('chatbox');
+    const inputForm = document.getElementById('inputForm');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const OPENAI_API_KEY = "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"; // Ganti dengan API key OpenAI Anda
+
+    function appendMessage(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        messageDiv.textContent = text;
+        chatbox.appendChild(messageDiv);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function removeLastBotMessage() {
+        const bots = chatbox.querySelectorAll('.bot');
+        if (bots.length > 0) {
+            chatbox.removeChild(bots[bots.length - 1]);
+        }
+    }
+
+    async function sendMessage(message) {
+        appendMessage('user', message);
+        userInput.value = '';
+        userInput.disabled = true;
+        sendBtn.disabled = true;
+
+        appendMessage('bot', 'Sedang mengetik...');
+
+        try {
+            const res = await fetch('https://api.openai.com/v1/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type' : 'application/json',
+                    'Authorization': 'Bearer ' + OPENAI_API_KEY
+                },
+                body: JSON.stringify({
+                    model: 'text-davinci-003',
+                    prompt: message,
+                    max_tokens: 150,
+                    temperature: 0.7,
+                    n: 1,
+                    stop: null
+                })
+            });
+            const data = await res.json();
+            removeLastBotMessage();
+
+            if (data.choices && data.choices.length > 0) {
+                appendMessage('bot', data.choices[0].text.trim());
+            } else {
+                appendMessage('bot', 'Maaf, saya tidak mengerti.');
+            }
+        } catch (error) {
+            removeLastBotMessage();
+            appendMessage('bot', 'Error: Tidak dapat menghubungi server.');
+            console.error(error);
+        } finally {
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    inputForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const msg = userInput.value.trim();
+        if (msg) {
+            sendMessage(msg);
+        }
+    });
+
+    userInput.focus();
+</script>
+
+</body>
+</html>
